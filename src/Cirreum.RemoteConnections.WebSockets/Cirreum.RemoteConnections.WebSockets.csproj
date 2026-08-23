@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<AssemblyName>Cirreum.RemoteConnections.WebSockets</AssemblyName>
+		<RootNamespace>Cirreum.RemoteServices</RootNamespace>
+		<Description>Raw WebSocket transport for Cirreum remote connections — a ClientWebSocket-backed IRemoteConnection with adapter-owned receive and reconnect loops, access-token refresh per attempt, binary-frame support, and an overridable frame-routing seam for third-party wire formats. Host-neutral: server-side bridges and browser clients use the same package.</Description>
+		<PackageTags>cirreum;websockets;realtime;client;streaming;remoteconnections</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Cirreum.Contracts (+ Kernel/Result) flow in transitively via Cirreum.Domain.
+		     ClientWebSocket lives in System.Net.WebSockets — no external transport package. -->
+		<PackageReference Include="Cirreum.Domain" Version="4.2.5" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Cirreum.RemoteServices" />
+	</ItemGroup>
+
+	<!-- InternalsVisibleTo: Local Development Only -->
+	<ItemGroup Label="InternalsVisibleTo" Condition="'$(IsLocalBuild)' == 'true'">
+		<InternalsVisibleTo Include="Cirreum.RemoteConnections.WebSockets.Tests" />
+	</ItemGroup>
+
+</Project>

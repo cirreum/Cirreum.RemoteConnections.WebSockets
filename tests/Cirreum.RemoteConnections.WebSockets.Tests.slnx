@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <File Path="../src/Directory.Build.props" />
+    <Project Path="../src/Cirreum.RemoteConnections.WebSockets/Cirreum.RemoteConnections.WebSockets.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="Directory.Build.props" />
+    <Project Path="Cirreum.RemoteConnections.WebSockets.Tests/Cirreum.RemoteConnections.WebSockets.Tests.csproj" />
+  </Folder>
+</Solution>
