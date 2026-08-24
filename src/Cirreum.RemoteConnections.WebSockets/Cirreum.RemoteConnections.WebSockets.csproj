@@ -10,7 +10,7 @@
 	<ItemGroup>
 		<!-- Cirreum.Contracts (+ Kernel/Result) flow in transitively via Cirreum.Domain.
 		     ClientWebSocket lives in System.Net.WebSockets — no external transport package. -->
-		<PackageReference Include="Cirreum.Domain" Version="4.2.5" />
+		<PackageReference Include="Cirreum.Domain" Version="4.3.1" />
 	</ItemGroup>
 
 	<ItemGroup>
