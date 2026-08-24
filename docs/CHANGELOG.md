@@ -12,6 +12,8 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-24
+
 Initial release of **Cirreum.RemoteConnections.WebSockets**.
 
 ### Added
