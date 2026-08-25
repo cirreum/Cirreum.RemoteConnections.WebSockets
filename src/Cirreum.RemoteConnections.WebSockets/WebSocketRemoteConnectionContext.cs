@@ -1,4 +1,4 @@
-namespace Cirreum.RemoteServices;
+﻿namespace Cirreum.RemoteServices.Connections;
 
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
@@ -39,18 +39,22 @@ public sealed class WebSocketRemoteConnectionContext {
 	/// <summary>
 	/// Build a context for a connection to the endpoint described by <paramref name="options"/>.
 	/// </summary>
+	/// <typeparam name="TConnection">
+	/// The connection type being built, which a credential source may be registered against.
+	/// </typeparam>
 	/// <param name="services">The provider used to resolve the logger and, where the options
-	/// do not specify credentials, the ambient <see cref="IRemoteConnectionTokenSource"/>.</param>
+	/// do not specify credentials, the ambient <see cref="IRemoteConnectionCredentialSource"/>.</param>
 	/// <param name="options">The connection's options. The endpoint must be an absolute Uri.</param>
 	/// <param name="configureTransport">
 	/// An optional delegate applied to each socket's <see cref="ClientWebSocketOptions"/> after
 	/// the framework has configured it, so that any transport setting may be overridden. Called
 	/// once per connect and reconnect attempt, because each attempt builds a fresh socket.
 	/// </param>
-	public static WebSocketRemoteConnectionContext Create(
+	public static WebSocketRemoteConnectionContext Create<TConnection>(
 		IServiceProvider services,
 		RemoteConnectionOptions options,
-		Action<ClientWebSocketOptions>? configureTransport = null) {
+		Action<ClientWebSocketOptions>? configureTransport = null)
+		where TConnection : WebSocketRemoteConnection {
 
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(options);
@@ -78,7 +82,7 @@ public sealed class WebSocketRemoteConnectionContext {
 		var connectionId = Guid.NewGuid().ToString("N");
 
 		var factory = new WebSocketConnectionFactory(
-			options, services, logger, connectionId, configureTransport);
+			options, typeof(TConnection), services, logger, connectionId, configureTransport);
 
 		return new WebSocketRemoteConnectionContext(factory, options, logger, connectionId);
 	}

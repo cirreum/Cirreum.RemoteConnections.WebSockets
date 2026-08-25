@@ -15,6 +15,7 @@
 
 	<ItemGroup>
 		<Using Include="Cirreum.RemoteServices" />
+		<Using Include="Cirreum.RemoteServices.Connections" />
 	</ItemGroup>
 
 	<!-- InternalsVisibleTo: Local Development Only -->

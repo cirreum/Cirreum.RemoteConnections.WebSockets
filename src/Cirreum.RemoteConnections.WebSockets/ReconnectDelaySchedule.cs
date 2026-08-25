@@ -1,4 +1,4 @@
-namespace Cirreum.RemoteServices;
+﻿namespace Cirreum.RemoteServices.Connections;
 
 /// <summary>
 /// The delay between reconnect attempts: a fixed schedule backing off to a configured ceiling,

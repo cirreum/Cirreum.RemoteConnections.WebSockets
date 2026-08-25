@@ -160,7 +160,7 @@ public sealed class WebSocketRemoteConnectionIntegrationTests : IAsyncLifetime {
 		};
 		configure?.Invoke(options);
 
-		return new EchoConnection(WebSocketRemoteConnectionContext.Create(
+		return new EchoConnection(WebSocketRemoteConnectionContext.Create<EchoConnection>(
 			new ServiceCollection().BuildServiceProvider(), options));
 	}
 

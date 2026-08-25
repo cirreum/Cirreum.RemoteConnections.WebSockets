@@ -1,4 +1,4 @@
-namespace Cirreum.RemoteServices;
+﻿namespace Cirreum.RemoteServices.Connections;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +17,7 @@ using System.Net.WebSockets;
 /// </remarks>
 internal sealed class WebSocketConnectionFactory(
 	RemoteConnectionOptions options,
+	Type connectionType,
 	IServiceProvider services,
 	ILogger logger,
 	string connectionId,
@@ -35,8 +36,8 @@ internal sealed class WebSocketConnectionFactory(
 		}
 
 		var credential = await this.ResolveCredentialAsync(cancellationToken).ConfigureAwait(false);
-		if (credential is { Scheme.Length: > 0, Value.Length: > 0 }) {
-			uri = Apply(socket, uri, credential.Value.Scheme, credential.Value.Value);
+		if (credential is { HasValue: true }) {
+			uri = Apply(socket, uri, credential.Scheme, credential.Value);
 		}
 
 		// The application's delegate runs last, so a setting it makes wins over the framework's.
@@ -76,21 +77,25 @@ internal sealed class WebSocketConnectionFactory(
 	/// <summary>
 	/// Resolve the credential for this attempt. Postures, in precedence order: an explicit
 	/// callback, an explicit header, an explicit choice to connect without credentials, then
-	/// the ambient <see cref="IRemoteConnectionTokenSource"/>.
+	/// the ambient <see cref="IRemoteConnectionCredentialSource"/>, preferring one registered
+	/// against the connection's type.
 	/// </summary>
-	private async ValueTask<(string Scheme, string Value)?> ResolveCredentialAsync(CancellationToken cancellationToken) {
+	/// <returns>
+	/// The credential to attach, or <see langword="null"/> to attach none. A credential that is
+	/// wanted but unavailable faults the attempt rather than returning here.
+	/// </returns>
+	private async ValueTask<AuthorizationHeaderSettings?> ResolveCredentialAsync(CancellationToken cancellationToken) {
 
-		if (options.AccessTokenProvider is { } callback) {
+		if (options.CredentialProvider is { } callback) {
 			this.LogPosture("explicit callback");
-			var token = await callback(cancellationToken).ConfigureAwait(false);
-			return token.HasValue() ? (BearerScheme, token) : null;
+			return this.Require(await callback(cancellationToken).ConfigureAwait(false));
 		}
 
 		var header = options.AuthorizationHeader;
 
 		if (header is { HasValue: true }) {
 			this.LogPosture($"static {header.Scheme} header");
-			return (header.Scheme, header.Value);
+			return header;
 		}
 
 		if (header is not null) {
@@ -98,20 +103,57 @@ internal sealed class WebSocketConnectionFactory(
 			return null;
 		}
 
-		this.LogPosture("ambient token source");
+		this.LogPosture("ambient credential source");
 
-		var source = services.GetService<IRemoteConnectionTokenSource>()
+		var source = this.ResolveSource()
 			?? throw new InvalidOperationException(
 				$"No credentials are available for the remote connection to '{options.EndpointUri}'. " +
-				$"Supply an access-token callback or an authorization header on its options, register " +
-				$"an {nameof(IRemoteConnectionTokenSource)}, or set the authorization header to " +
+				$"Supply a credential callback or an authorization header on its options, register " +
+				$"an {nameof(IRemoteConnectionCredentialSource)}, or set the authorization header to " +
 				$"{nameof(AuthorizationHeaderSettings)}.{nameof(AuthorizationHeaderSettings.None)} " +
 				$"to connect without credentials.");
 
-		var ambient = await source.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
-		return ambient.HasValue() ? (BearerScheme, ambient) : null;
+		var request = new RemoteConnectionTokenRequest {
+			EndpointUri = options.EndpointUri,
+			Scopes = options.Scopes,
+			ConnectionType = connectionType,
+		};
+
+		return this.Require(await source.GetCredentialAsync(request, cancellationToken).ConfigureAwait(false));
 	}
 
-	private void LogPosture(string posture) => logger.LogTokenPosture(connectionId, posture);
+	/// <summary>
+	/// Prefers a source registered against the connection's own type, so one connection can use a
+	/// different credential mechanism than another, and falls back to the unkeyed registration.
+	/// </summary>
+	private IRemoteConnectionCredentialSource? ResolveSource() {
+
+		if (services is IKeyedServiceProvider) {
+			var keyed = services.GetKeyedService<IRemoteConnectionCredentialSource>(connectionType);
+			if (keyed is not null) {
+				return keyed;
+			}
+		}
+
+		return services.GetService<IRemoteConnectionCredentialSource>();
+
+	}
+
+	/// <summary>
+	/// Distinguishes a deliberate decision to present nothing from an absent credential. The
+	/// second faults the attempt: connecting anyway would send an unauthenticated upgrade that
+	/// the server refuses, which reads as an application fault rather than a missing credential.
+	/// </summary>
+	private AuthorizationHeaderSettings? Require(AuthorizationHeaderSettings? resolved) {
+
+		return resolved ?? throw new InvalidOperationException(
+			$"No credential was supplied for the remote connection to '{options.EndpointUri}'. " +
+			$"Declare the scopes it should be requested for on the connection's options, or set the " +
+			$"authorization header to {nameof(AuthorizationHeaderSettings)}." +
+			$"{nameof(AuthorizationHeaderSettings.None)} to connect without credentials.");
+
+	}
+
+	private void LogPosture(string posture) => logger.LogCredentialPosture(connectionId, posture);
 
 }

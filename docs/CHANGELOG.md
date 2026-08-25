@@ -12,6 +12,48 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+### Breaking
+
+* **The connection types move to `Cirreum.RemoteServices.Connections`**, following
+  `Cirreum.Contracts` 5.0.0 and `Cirreum.Domain` 5.0.0. A service is something you call; a
+  connection is something you hold open, so it nests rather than sitting alongside.
+
+* **`WebSocketRemoteConnectionContext.Create` is generic**:
+  `Create<TConnection>(services, options, configureTransport)`. A credential source may be
+  registered against the connection's type, and this package is where the source is resolved, so
+  the type has to reach it.
+
+* **The credential seam follows `Cirreum.Contracts` 5.0.0.** The ambient source is
+  `IRemoteConnectionCredentialSource`, resolved with a `RemoteConnectionTokenRequest` and returning
+  `AuthorizationHeaderSettings?`; the per-connection callback is
+  `RemoteConnectionOptions.CredentialProvider`.
+
+  A resolved credential now has three answers. A value is presented.
+  `AuthorizationHeaderSettings.None` connects deliberately without one. `null` means none is
+  available and **fails the attempt** — a change from 1.0, where a callback or source returning
+  nothing produced an unauthenticated upgrade that the server refused later.
+
+  A callback also now supplies a full credential rather than a bare token, so it is no longer
+  assumed to be Bearer.
+
+### Added
+
+* **A credential source may be registered keyed to a connection type**, and is preferred over the
+  unkeyed registration for that connection — so one connection can use a different mechanism or
+  identity provider than another.
+
+* **`RemoteConnectionOptions.Scopes` reaches the source**, which is what lets a host mint a
+  credential for the audience the application named rather than for its own defaults.
+
+* **Any scheme may be resolved per attempt**, not only Bearer. A fresh socket is built per attempt
+  and its headers are set after the credential resolves, so an ApiKey or other scheme refreshes
+  across reconnects like a token does. The browser path is unchanged: it carries the credential as
+  an `access_token` query parameter, which only Bearer has an equivalent for.
+
+### Updated
+
+- `Cirreum.Domain` 5.0.0.
+
 ### Updated
 
 - Updated NuGet packages.

@@ -21,6 +21,7 @@
 		<Using Include="FluentAssertions" />
 		<Using Include="NSubstitute" />
 		<Using Include="Cirreum.RemoteServices" />
+		<Using Include="Cirreum.RemoteServices.Connections" />
 	</ItemGroup>
 
 	<ItemGroup>

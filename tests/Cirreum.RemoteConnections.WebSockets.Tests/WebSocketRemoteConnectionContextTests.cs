@@ -4,10 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 public class WebSocketRemoteConnectionContextTests {
 
+	private sealed class StubConnection(WebSocketRemoteConnectionContext context)
+		: WebSocketRemoteConnection(context);
+
 	private static IServiceProvider Services() => new ServiceCollection().BuildServiceProvider();
 
 	private static WebSocketRemoteConnectionContext Create(RemoteConnectionOptions options) =>
-		WebSocketRemoteConnectionContext.Create(Services(), options);
+		WebSocketRemoteConnectionContext.Create<StubConnection>(Services(), options);
 
 	private static RemoteConnectionOptions Valid() =>
 		new("TestApp", new Uri("wss://example.test/media"));
@@ -41,10 +44,10 @@ public class WebSocketRemoteConnectionContextTests {
 
 	[Fact]
 	public void NullArguments_AreRejected() {
-		((Action)(() => WebSocketRemoteConnectionContext.Create(null!, Valid())))
+		((Action)(() => WebSocketRemoteConnectionContext.Create<StubConnection>(null!, Valid())))
 			.Should().Throw<ArgumentNullException>();
 
-		((Action)(() => WebSocketRemoteConnectionContext.Create(Services(), null!)))
+		((Action)(() => WebSocketRemoteConnectionContext.Create<StubConnection>(Services(), null!)))
 			.Should().Throw<ArgumentNullException>();
 	}
 
@@ -92,14 +95,18 @@ public class WebSocketRemoteConnectionContextTests {
 	public async Task TheFactory_ResolvesTheCredentialPerAttempt() {
 		var calls = 0;
 		var options = Valid();
-		options.AccessTokenProvider = _ => { calls++; return ValueTask.FromResult<string?>("token"); };
+		options.CredentialProvider = _ => {
+			calls++;
+			return ValueTask.FromResult<AuthorizationHeaderSettings?>(
+				new AuthorizationHeaderSettings { Scheme = "Bearer", Value = "token" });
+		};
 
 		var factory = Create(options).SocketFactory;
 
 		(await factory.CreateAsync(CancellationToken.None)).Socket.Dispose();
 		(await factory.CreateAsync(CancellationToken.None)).Socket.Dispose();
 
-		calls.Should().Be(2, "a reconnect must re-read the token rather than reuse a captured one");
+		calls.Should().Be(2, "a reconnect must re-read the credential rather than reuse a captured one");
 	}
 
 	[Fact]
@@ -133,7 +140,7 @@ public class WebSocketRemoteConnectionContextTests {
 		var options = Valid();
 		options.AuthorizationHeader = AuthorizationHeaderSettings.None;
 
-		var context = WebSocketRemoteConnectionContext.Create(
+		var context = WebSocketRemoteConnectionContext.Create<StubConnection>(
 			Services(), options, _ => invoked++);
 
 		(await context.SocketFactory.CreateAsync(CancellationToken.None)).Socket.Dispose();

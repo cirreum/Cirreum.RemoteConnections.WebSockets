@@ -65,8 +65,9 @@ Register it, and connect when the caller is ready:
 
 ```csharp
 services.AddSingleton(sp => new VoiceConnection(
-    WebSocketRemoteConnectionContext.Create(sp, new RemoteConnectionOptions("MyApp") {
-        EndpointUri = new Uri("wss://provider.example.com/realtime")
+    WebSocketRemoteConnectionContext.Create<VoiceConnection>(sp, new RemoteConnectionOptions("MyApp") {
+        EndpointUri = new Uri("wss://provider.example.com/realtime"),
+        Scopes = ["api://contoso/access_as_user"],
     })));
 ```
 
@@ -75,7 +76,7 @@ one per bridge — construct one per session and dispose it with the session:
 
 ```csharp
 await using var voice = new VoiceConnection(
-    WebSocketRemoteConnectionContext.Create(services, options));
+    WebSocketRemoteConnectionContext.Create<VoiceConnection>(services, options));
 
 await voice.ConnectAsync(ct);
 ```
@@ -92,11 +93,29 @@ per-session lifetime rather than leaving each application to construct and track
   jittered backoff, driving the same state machine. Override `OnReconnectedAsync` to restore
   server-side state that does not survive a reconnect.
 - **Credentials** — resolved on every connect *and reconnect* attempt. A `ClientWebSocket` is
-  single-use, so each attempt builds a fresh one and re-reads the token; refresh is a
-  consequence of that rather than extra machinery. Postures resolve in order: an explicit
-  callback, an explicit authorization header, an explicit choice to connect without
-  credentials, then an ambient `IRemoteConnectionTokenSource`. With none of those the
-  connection fails rather than connecting anonymously.
+  single-use, so each attempt builds a fresh one and re-reads the credential; refresh is a
+  consequence of that rather than extra machinery. Postures resolve in a fixed order, and the
+  first one set wins:
+
+  | # | Posture | Set by |
+  |---|---|---|
+  | 1 | `CredentialProvider` | a callback on the connection's options |
+  | 2 | `AuthorizationHeader` carrying a value | the connection's options |
+  | 3 | `AuthorizationHeaderSettings.None` | the connection's options, to connect deliberately without one |
+  | 4 | the ambient `IRemoteConnectionCredentialSource` | the host runtime, or the application |
+
+  The ambient source is told what it is supplying for — endpoint, the `Scopes` the options declare,
+  and the connection type — and a source registered *keyed* to that type is preferred over the
+  unkeyed one, so one connection can use a different mechanism than another.
+
+  A resolved credential has three answers: a value to present, `None` to connect without one, and
+  `null` meaning none is available — which fails the connect rather than connecting anonymously.
+
+  **Any scheme may be resolved per attempt**, not only Bearer, because the socket's headers are set
+  after the credential resolves. Off-browser the credential travels as an `Authorization` header. In
+  a browser, which cannot set headers on an upgrade, it travels as an `access_token` query
+  parameter — and only Bearer has that equivalent, so a non-Bearer credential in a browser is
+  rejected rather than silently dropped.
 - **State and identity** — `State` and `StateChanged` report the connection's lifecycle;
   `ConnectionId` is assigned by the adapter and stable across reconnects. `SubProtocol` reports
   what the server selected, re-read per connection because each reconnect negotiates afresh.

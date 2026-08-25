@@ -1,4 +1,4 @@
-namespace Cirreum.RemoteServices;
+﻿namespace Cirreum.RemoteServices.Connections;
 
 using Microsoft.Extensions.Logging;
 
@@ -69,7 +69,7 @@ internal static partial class WebSocketRemoteConnectionLogging {
 		EventId = 3007,
 		Level = LogLevel.Debug,
 		Message = "Remote connection {ConnectionId} resolved credentials using the {Posture} posture")]
-	internal static partial void LogTokenPosture(
+	internal static partial void LogCredentialPosture(
 		this ILogger logger,
 		string connectionId,
 		string posture);
