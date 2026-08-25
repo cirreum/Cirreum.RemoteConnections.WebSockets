@@ -12,6 +12,14 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+### Fixed
+
+* **The README documented hand-composed registration only.** It predates
+  `Cirreum.Runtime.RemoteConnections.WebSockets`, which supplies `AddRemoteConnection<TConnection>()` and
+  `AddRemoteConnectionFactory<TConnection>()` on a Cirreum application builder — the registration an
+  application reaching for this package will normally want. The README now leads with it and keeps
+  direct composition for hosts not building through `IDomainApplicationBuilder`.
+
 ## [1.0.0] - 2026-08-24
 
 Initial release of **Cirreum.RemoteConnections.WebSockets**.
