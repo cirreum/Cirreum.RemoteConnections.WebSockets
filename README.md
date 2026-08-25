@@ -61,31 +61,7 @@ public sealed class NotificationConnection(WebSocketRemoteConnectionContext cont
 }
 ```
 
-Register it. On a Cirreum application builder, `Cirreum.Runtime.RemoteConnections.WebSockets`
-supplies the registration:
-
-```csharp
-builder.AddRemoteConnection<VoiceConnection>(options => {
-    options.EndpointUri = new Uri("wss://provider.example.com/realtime");
-});
-```
-
-For a connection whose lifetime is a session rather than the application — one per phone call, one
-per bridge — register a factory instead. It creates instances the caller owns, connects, and
-disposes:
-
-```csharp
-builder.AddRemoteConnectionFactory<VoiceConnection>(options => {
-    options.EndpointUri = new Uri("wss://provider.example.com/realtime");
-});
-
-// per session
-await using var voice = this._voiceFactory.Create();
-await voice.ConnectAsync(ct);
-```
-
-Composing either shape directly is supported for hosts that are not building through
-`IDomainApplicationBuilder`:
+Register it, and connect when the caller is ready:
 
 ```csharp
 services.AddSingleton(sp => new VoiceConnection(
@@ -94,7 +70,19 @@ services.AddSingleton(sp => new VoiceConnection(
     })));
 ```
 
-Registration does not connect. Connect when the caller is ready.
+For a connection whose lifetime is a session rather than the application — one per phone call,
+one per bridge — construct one per session and dispose it with the session:
+
+```csharp
+await using var voice = new VoiceConnection(
+    WebSocketRemoteConnectionContext.Create(services, options));
+
+await voice.ConnectAsync(ct);
+```
+
+Applications composing through a Cirreum application builder normally register through the matching
+Runtime Extensions package instead, which reduces both shapes to a single builder call and owns the
+per-session lifetime rather than leaving each application to construct and track its own.
 
 ## What the base owns
 

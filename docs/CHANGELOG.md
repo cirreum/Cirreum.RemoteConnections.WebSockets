@@ -14,11 +14,10 @@ guides linked at the bottom of each entry.
 
 ### Fixed
 
-* **The README documented hand-composed registration only.** It predates
-  `Cirreum.Runtime.RemoteConnections.WebSockets`, which supplies `AddRemoteConnection<TConnection>()` and
-  `AddRemoteConnectionFactory<TConnection>()` on a Cirreum application builder — the registration an
-  application reaching for this package will normally want. The README now leads with it and keeps
-  direct composition for hosts not building through `IDomainApplicationBuilder`.
+* **The README described direct composition as the only way to register a connection.** Cirreum
+  applications composing through an application builder register through the matching Runtime
+  Extensions package, which is the path most consumers of this package take. The README now says
+  so, while keeping direct composition documented for hosts that compose services themselves.
 
 ## [1.0.0] - 2026-08-24
 
