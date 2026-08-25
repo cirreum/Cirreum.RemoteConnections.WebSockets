@@ -12,6 +12,8 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-25
+
 ### Fixed
 
 * **The README described direct composition as the only way to register a connection.** Cirreum
