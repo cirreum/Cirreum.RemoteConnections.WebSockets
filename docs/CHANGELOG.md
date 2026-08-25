@@ -12,6 +12,8 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-25
+
 ### Breaking
 
 * **The connection types move to `Cirreum.RemoteServices.Connections`**, following
