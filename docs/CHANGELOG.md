@@ -12,6 +12,8 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-08-29
+
 ### Fixed
 
 - **Builds against `Cirreum.Contracts` 6.0.0.** That release renamed
