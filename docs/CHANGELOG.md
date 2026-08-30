@@ -12,6 +12,17 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Builds against `Cirreum.Contracts` 6.0.0.** That release renamed
+  `RemoteConnectionTokenRequest` to `RemoteConnectionCredentialRequest`, finishing the
+  tokens-to-credentials rename 5.0.0 began. `WebSocketConnectionFactory` still named the old type, so the
+  2.0.1 build failed at compile.
+
+  **No NuGet package was published for 2.0.1** — the tag and GitHub release exist, but the publish
+  workflow never produced an artifact. 2.0.2 is the first release carrying the Contracts 6.0.0
+  dependency.
+
 ## [2.0.1] - 2026-08-29
 
 ### Updated

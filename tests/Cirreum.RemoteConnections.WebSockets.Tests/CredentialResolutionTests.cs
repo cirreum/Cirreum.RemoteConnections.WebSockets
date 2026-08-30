@@ -39,10 +39,10 @@ public class CredentialResolutionTests {
 
 	private sealed class StubSource(AuthorizationHeaderSettings? credential) : IRemoteConnectionCredentialSource {
 
-		public RemoteConnectionTokenRequest? LastRequest { get; private set; }
+		public RemoteConnectionCredentialRequest? LastRequest { get; private set; }
 
 		public ValueTask<AuthorizationHeaderSettings?> GetCredentialAsync(
-			RemoteConnectionTokenRequest request, CancellationToken cancellationToken = default) {
+			RemoteConnectionCredentialRequest request, CancellationToken cancellationToken = default) {
 
 			this.LastRequest = request;
 			return ValueTask.FromResult(credential);
@@ -180,7 +180,7 @@ public class CredentialResolutionTests {
 		public int Calls { get; private set; }
 
 		public ValueTask<AuthorizationHeaderSettings?> GetCredentialAsync(
-			RemoteConnectionTokenRequest request, CancellationToken cancellationToken = default) {
+			RemoteConnectionCredentialRequest request, CancellationToken cancellationToken = default) {
 
 			this.Calls++;
 			return ValueTask.FromResult<AuthorizationHeaderSettings?>(

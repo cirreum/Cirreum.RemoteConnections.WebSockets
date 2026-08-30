@@ -113,7 +113,7 @@ internal sealed class WebSocketConnectionFactory(
 				$"{nameof(AuthorizationHeaderSettings)}.{nameof(AuthorizationHeaderSettings.None)} " +
 				$"to connect without credentials.");
 
-		var request = new RemoteConnectionTokenRequest {
+		var request = new RemoteConnectionCredentialRequest {
 			EndpointUri = options.EndpointUri,
 			Scopes = options.Scopes,
 			ConnectionType = connectionType,
