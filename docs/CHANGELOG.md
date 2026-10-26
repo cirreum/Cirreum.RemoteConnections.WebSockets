@@ -12,6 +12,10 @@ guides linked at the bottom of each entry.
 
 ## [Unreleased]
 
+### Updated
+
+- **`Cirreum.Domain`** — `5.1.0` → `5.1.1` (re-pinned against `Cirreum.Contracts` 6.2.0, host invocations). Where referenced, **`Cirreum.Messaging.Distributed`** — `2.0.6` → `2.1.0` (envelope `Subject`).
+
 ## [2.0.3] - 2026-10-25
 
 ### Updated
